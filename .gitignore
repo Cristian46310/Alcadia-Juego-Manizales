@@ -59,6 +59,9 @@ crashlytics-build.properties
 /My project/Assets/Art/Environment/Map/satandermap.obj
 /My project/Assets/Art/Environment/Map/satandermap.obj.meta
 
+# Ignore the whole local Map folder
+/My project/Assets/Art/Environment/Map/
+
 # Exclude the local plugin cache
 /[Pp]ackages/manifest.json.lock
 
