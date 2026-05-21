@@ -68,3 +68,7 @@ crashlytics-build.properties
 
 # Keep serialized files with text format
 # *.asset files are usually important, so don't ignore them
+/My project/Library/
+/My project/Logs/
+/My project/obj/
+/My project/UserSettings/
