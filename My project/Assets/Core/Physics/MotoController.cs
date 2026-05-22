@@ -34,6 +34,8 @@ public class MotoController : MonoBehaviour
     private float inclinacionActual = 0f;
     private Quaternion modeloVisualRestLocalRotation;
 
+    public float VelocidadActualKMH => velocidadActualKMH;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();

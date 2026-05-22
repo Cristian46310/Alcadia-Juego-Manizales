@@ -13345,12 +13345,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1577541436}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9006f51ef47705d41b6fbaaba1ffda25, type: 3}
+  m_Script: {fileID: 11500000, guid: 83c2c5375d175c9b9aaa0b03b3111952, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MotoInclinacion
-  inclinacionMaxima: 25
-  velocidadSuavizado: 8
-  velocidadRegreso: 12
+  m_EditorClassIdentifier: Assembly-CSharp::ChoqueFinDePartida
+  escenaTaller: Taller
+  escenaMensaje: MensajeMotivacional 1
+  escenaPorDefecto: Taller
+  velocidadMinimaMensajeKMH: 70
+  velocidadMinimaTallerKMH: 40
+  velocidadMaximaTallerKMH: 69
+  tagsEntidadChoque:
+  - Vehiculo
+  - Peaton
 --- !u!1 &1583591849
 GameObject:
   m_ObjectHideFlags: 0

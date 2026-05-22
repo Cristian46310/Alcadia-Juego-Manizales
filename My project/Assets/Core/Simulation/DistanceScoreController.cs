@@ -23,6 +23,8 @@ public class DistanceScoreController : MonoBehaviour
     private Vector3 posicionAnteriorPlano;
     private float puntajeAcumulado;
 
+    public static DistanceScoreController Instancia { get; private set; }
+
     public int PuntajeActual => Mathf.FloorToInt(puntajeAcumulado);
 
     // Expuesto para mostrar en UI de debug si quieres
