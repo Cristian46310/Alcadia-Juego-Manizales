@@ -9,10 +9,10 @@ public class DistanceScoreController : MonoBehaviour
     [Header("Puntaje")]
     public float puntosPorMetroBase = 10f;
     public float velocidadMinimaParaSumar = 0.5f;
-    public float velocidadMaximaReferencia = 20f;  // NUEVO: velocidad "tope" del juego
+    public float velocidadMaximaReferencia = 20f;
     [Range(1f, 4f)]
-    public float exponenteVelocidad = 2f;           // NUEVO: 1=lineal, 2=cuadrático, 3=cúbico
-    public float multiplicadorMaximo = 10f;         // NUEVO: techo del multiplicador
+    public float exponenteVelocidad = 2f;
+    public float multiplicadorMaximo = 10f;
     public bool soloContarMovimientoHaciaAdelante = true;
 
     [Header("UI")]
@@ -22,12 +22,12 @@ public class DistanceScoreController : MonoBehaviour
 
     private Vector3 posicionAnteriorPlano;
     private float puntajeAcumulado;
+    private float metrosAcumulados; // <-- NUEVO
 
     public static DistanceScoreController Instancia { get; private set; }
 
     public int PuntajeActual => Mathf.FloorToInt(puntajeAcumulado);
-
-    // Expuesto para mostrar en UI de debug si quieres
+    public float MetrosRecorridos => metrosAcumulados; // <-- NUEVO
     public float MultiplicadorActual { get; private set; }
 
     private void Start()
@@ -48,6 +48,7 @@ public class DistanceScoreController : MonoBehaviour
         float distanciaValida = CalcularDistanciaValida(desplazamientoPlano);
         if (distanciaValida <= 0f) return;
 
+        metrosAcumulados += distanciaValida; // <-- NUEVO
         puntajeAcumulado += distanciaValida * puntosPorMetroBase * MultiplicadorActual;
         ActualizarUI();
     }
@@ -55,6 +56,7 @@ public class DistanceScoreController : MonoBehaviour
     public void ReiniciarPuntaje()
     {
         puntajeAcumulado = 0f;
+        metrosAcumulados = 0f; // <-- NUEVO
         posicionAnteriorPlano = ObtenerPosicionPlano();
         ActualizarUI();
     }
@@ -77,13 +79,11 @@ public class DistanceScoreController : MonoBehaviour
             return 0f;
         }
 
-        // Normaliza la velocidad entre 0 y 1 respecto al tope configurado
         float velocidadNorm = Mathf.Clamp01(
             (velocidadPlano - velocidadMinimaParaSumar) /
             Mathf.Max(velocidadMaximaReferencia - velocidadMinimaParaSumar, 0.01f)
         );
 
-        // Curva de potencia: a baja velocidad sube poco, a alta velocidad se dispara
         MultiplicadorActual = Mathf.Clamp(
             Mathf.Pow(velocidadNorm, exponenteVelocidad) * multiplicadorMaximo,
             0.01f,

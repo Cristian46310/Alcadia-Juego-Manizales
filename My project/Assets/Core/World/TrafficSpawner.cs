@@ -40,7 +40,8 @@ public class TrafficSpawner : MonoBehaviour
 
     private void IntentarSpawn()
     {
-        if (carriles == null || carriles.Length == 0 || prefabsVehiculo == null || prefabsVehiculo.Length == 0)
+        if (carriles == null || carriles.Length == 0 ||
+            prefabsVehiculo == null || prefabsVehiculo.Length == 0)
         {
             return;
         }
@@ -57,9 +58,8 @@ public class TrafficSpawner : MonoBehaviour
             return;
         }
 
-        Vector3 puntoSpawn = carrilElegido.GetPoint(0);
-
-        if (jugador != null && Vector3.Distance(jugador.position, puntoSpawn) < distanciaMinimaAlJugador)
+        // Busca un punto válido fuera del rango del jugador en todo el carril
+        if (!ObtenerPuntoSpawnAleatorio(carrilElegido, out Vector3 puntoSpawn, out int indiceSpawn))
         {
             return;
         }
@@ -77,9 +77,49 @@ public class TrafficSpawner : MonoBehaviour
         }
 
         TrafficVehicleAI vehiculo = Instantiate(prefab, puntoSpawn, Quaternion.identity);
-        vehiculo.ConfigurarCarril(carrilElegido);
+
+        // Pasa el índice correcto para que el vehículo no regrese al punto 0
+        vehiculo.ConfigurarCarril(carrilElegido, indiceSpawn);
         vehiculo.ConfigurarVelocidadObjetivo(Random.Range(velocidadMinimaKMH, velocidadMaximaKMH));
         vehiculosActivos.Add(vehiculo);
+    }
+
+    /// <summary>
+    /// Reúne todos los puntos del carril que estén fuera del rango del jugador
+    /// y elige uno al azar entre ellos.
+    /// Devuelve false si no hay ningún punto válido disponible.
+    /// </summary>
+    private bool ObtenerPuntoSpawnAleatorio(LanePath carril, out Vector3 puntoElegido, out int indiceElegido)
+    {
+        // Lista temporal de índices candidatos (evita allocations innecesarias con capacidad inicial)
+        List<int> candidatos = new List<int>(carril.PointCount);
+
+        for (int i = 0; i < carril.PointCount; i++)
+        {
+            Vector3 punto = carril.GetPoint(i);
+
+            // Descarta puntos demasiado cerca del jugador
+            if (jugador != null &&
+                Vector3.Distance(jugador.position, punto) < distanciaMinimaAlJugador)
+            {
+                continue;
+            }
+
+            candidatos.Add(i);
+        }
+
+        if (candidatos.Count == 0)
+        {
+            puntoElegido = Vector3.zero;
+            indiceElegido = 0;
+            return false;
+        }
+
+        // Elige un índice al azar entre los candidatos válidos
+        int seleccion = candidatos[Random.Range(0, candidatos.Count)];
+        puntoElegido = carril.GetPoint(seleccion);
+        indiceElegido = seleccion;
+        return true;
     }
 
     private LanePath ObtenerCarrilDisponible()

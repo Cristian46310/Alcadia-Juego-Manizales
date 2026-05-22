@@ -11,6 +11,7 @@ public class TrafficVehicleAI : MonoBehaviour
 
     [Header("Movimiento")]
     public float velocidadObjetivo = 45f;
+    public float velocidadActualKMH;
     public float aceleracionPorSegundo = 10f;
     public float frenadoPorSegundo = 18f;
     public float velocidadGiro = 6f;
@@ -21,10 +22,15 @@ public class TrafficVehicleAI : MonoBehaviour
     public float alturaSensor = 0.8f;
     public LayerMask capasObstaculo = ~0;
     public float distanciaMinima = 2.5f;
+    public float sensorExtraPorKMH = 0.18f;
+    public float sensorMaxDistance = 32f;
+    public float stoppingMargin = 3f;
 
     private Rigidbody rb;
     private int waypointActual;
-    private float velocidadActualKMH;
+
+    // El "escudo" para saber si el Spawner ya configuró este coche
+    private bool carrilConfiguradoExternamente = false;
 
     public LanePath Lane => lanePath;
 
@@ -37,11 +43,14 @@ public class TrafficVehicleAI : MonoBehaviour
 
     private void Start()
     {
-        waypointActual = Mathf.Max(0, waypointInicial);
+        // SI LA BANDERA ES TRUE: Ignora este método porque el Spawner ya le dio su waypoint real
+        if (carrilConfiguradoExternamente) return;
 
+        // SI LA BANDERA ES FALSE: Significa que arrastraste el coche a mano en el editor
         if (lanePath != null && lanePath.PointCount > 0)
         {
-            transform.position = lanePath.GetPoint(Mathf.Clamp(waypointActual, 0, lanePath.PointCount - 1));
+            waypointActual = Mathf.Clamp(waypointInicial, 0, lanePath.PointCount - 1);
+            transform.position = lanePath.GetPoint(waypointActual);
         }
     }
 
@@ -57,15 +66,34 @@ public class TrafficVehicleAI : MonoBehaviour
         MoverVehiculo();
     }
 
-    public void ConfigurarCarril(LanePath nuevoCarril, int nuevoWaypoint = 0)
+    /// <summary>
+    /// Llamado por el spawner. Asigna el carril y el punto de inicio correcto.
+    /// </summary>
+    public void ConfigurarCarril(LanePath nuevoCarril, int indiceInicial = 0)
     {
         lanePath = nuevoCarril;
-        waypointActual = Mathf.Max(0, nuevoWaypoint);
 
-        if (lanePath != null && lanePath.PointCount > 0)
+        if (lanePath == null || lanePath.PointCount == 0)
         {
-            Vector3 punto = lanePath.GetPoint(waypointActual);
-            transform.position = punto;
+            return;
+        }
+
+        // Activamos la bandera para bloquear el Start() de Unity
+        carrilConfiguradoExternamente = true;
+
+        waypointActual = Mathf.Clamp(indiceInicial, 0, lanePath.PointCount - 1);
+
+        // Teletransporta el vehículo al punto correcto del carril (ej: 30)
+        transform.position = lanePath.GetPoint(waypointActual);
+
+        // Orienta el vehículo hacia el siguiente waypoint desde el inicio (ej: hacia el 31)
+        int siguienteIndice = lanePath.GetNextIndex(waypointActual);
+        Vector3 direccionInicial = lanePath.GetPoint(siguienteIndice) - transform.position;
+        direccionInicial = Vector3.ProjectOnPlane(direccionInicial, Vector3.up);
+
+        if (direccionInicial.sqrMagnitude > 0.001f)
+        {
+            transform.rotation = Quaternion.LookRotation(direccionInicial, Vector3.up);
         }
     }
 
@@ -92,7 +120,6 @@ public class TrafficVehicleAI : MonoBehaviour
             {
                 Destroy(gameObject);
             }
-
             return;
         }
 
@@ -116,7 +143,10 @@ public class TrafficVehicleAI : MonoBehaviour
         }
 
         float velocidadDeseadaKMH = CalcularVelocidadDeseada();
-        float cambioPorSegundo = velocidadDeseadaKMH >= velocidadActualKMH ? aceleracionPorSegundo : frenadoPorSegundo;
+        float cambioPorSegundo = velocidadDeseadaKMH >= velocidadActualKMH
+            ? aceleracionPorSegundo
+            : frenadoPorSegundo;
+
         velocidadActualKMH = Mathf.MoveTowards(
             velocidadActualKMH,
             velocidadDeseadaKMH,
@@ -129,25 +159,87 @@ public class TrafficVehicleAI : MonoBehaviour
 
     private float CalcularVelocidadDeseada()
     {
+        float sensorDistance = GetDynamicSensorDistance();
         Vector3 origenSensor = transform.position + Vector3.up * alturaSensor;
+        RaycastHit[] hits = Physics.SphereCastAll(
+            origenSensor,
+            radioSensor,
+            transform.forward,
+            sensorDistance,
+            capasObstaculo,
+            QueryTriggerInteraction.Collide);
 
-        if (!Physics.SphereCast(origenSensor, radioSensor, transform.forward, out RaycastHit hit, largoSensor, capasObstaculo, QueryTriggerInteraction.Ignore))
+        RaycastHit mejorHit = default;
+        bool hitEncontrado = false;
+
+        foreach (var hit in hits)
         {
-            return velocidadObjetivo;
+            if (hit.collider == null) continue;
+            if (hit.collider.attachedRigidbody == rb) continue; // Ignora el propio vehículo
+            if (hit.distance <= 0f) continue;
+
+            if (!hitEncontrado || hit.distance < mejorHit.distance)
+            {
+                mejorHit = hit;
+                hitEncontrado = true;
+            }
         }
 
-        if (hit.rigidbody == rb)
+        if (!hitEncontrado) return velocidadObjetivo;
+        RaycastHit objetivo = mejorHit;
+
+        TrafficLightObstacle semaforo = objetivo.collider.GetComponent<TrafficLightObstacle>();
+        if (semaforo != null)
         {
-            return velocidadObjetivo;
+            if (!semaforo.DebeDetenerse())
+            {
+                return velocidadObjetivo;
+            }
+            return GetSpeedForStoppingObstacle(objetivo.distance);
         }
 
-        if (hit.distance <= distanciaMinima)
-        {
-            return 0f;
-        }
+        if (objetivo.distance <= distanciaMinima) return 0f;
 
-        float factorDistancia = Mathf.InverseLerp(distanciaMinima, largoSensor, hit.distance);
+        float safeDistance = GetSafeStoppingDistance(objetivo);
+        if (objetivo.distance <= safeDistance) return 0f;
+
+        float factorDistancia = Mathf.InverseLerp(safeDistance, sensorDistance, objetivo.distance);
         return velocidadObjetivo * factorDistancia;
+    }
+
+    private float GetDynamicSensorDistance()
+    {
+        float velocidadActualMS = rb.linearVelocity.magnitude;
+        float extra = rb.linearVelocity.magnitude * 3.6f * sensorExtraPorKMH;
+        return Mathf.Clamp(largoSensor + extra, largoSensor, sensorMaxDistance);
+    }
+
+    private float GetSafeStoppingDistance(RaycastHit hit)
+    {
+        float velocidadActualMS = rb.linearVelocity.magnitude;
+        float desaceleracionMS = Mathf.Max(0.01f, frenadoPorSegundo / 3.6f);
+        float stoppingDistance = velocidadActualMS * velocidadActualMS / (2f * desaceleracionMS);
+
+        float objetivoVelocidadMS = 0f;
+        float hitSpeedMS = 0f;
+        if (hit.rigidbody != null)
+        {
+            hitSpeedMS = Vector3.Project(hit.rigidbody.linearVelocity, transform.forward).magnitude;
+        }
+
+        float relativeSpeed = Mathf.Max(0f, velocidadActualMS - hitSpeedMS);
+        float relativeStoppingDistance = relativeSpeed * relativeSpeed / (2f * desaceleracionMS);
+
+        float safeDistance = Mathf.Max(distanciaMinima, stoppingDistance, relativeStoppingDistance) + stoppingMargin;
+        return safeDistance;
+    }
+
+    private float GetSpeedForStoppingObstacle(float distance)
+    {
+        float safeDistance = GetSafeStoppingDistance(default);
+        if (distance <= safeDistance) return 0f;
+        float sensorDistance = GetDynamicSensorDistance();
+        return velocidadObjetivo * Mathf.InverseLerp(safeDistance, sensorDistance, distance);
     }
 
     private void OnDrawGizmosSelected()
