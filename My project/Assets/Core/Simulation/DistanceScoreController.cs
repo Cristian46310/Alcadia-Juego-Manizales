@@ -19,7 +19,27 @@ public class DistanceScoreController : MonoBehaviour
     private Vector3 posicionAnteriorPlano;
     private float puntajeAcumulado;
 
+    public static DistanceScoreController Instancia { get; private set; }
+
     public int PuntajeActual => Mathf.FloorToInt(puntajeAcumulado);
+
+    public float MetrosRecorridos =>
+        puntosPorMetro > 0f ? puntajeAcumulado / puntosPorMetro : 0f;
+
+    public float KilometrosRecorridos => MetrosRecorridos / 1000f;
+
+    private void Awake()
+    {
+        Instancia = this;
+    }
+
+    private void OnDestroy()
+    {
+        if (Instancia == this)
+        {
+            Instancia = null;
+        }
+    }
 
     private void Start()
     {

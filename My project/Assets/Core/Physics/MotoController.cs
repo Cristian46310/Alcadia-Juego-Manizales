@@ -27,6 +27,8 @@ public class MotoController : MonoBehaviour
     private float velocidadActualKMH;
     private float presionFrenoActual;
 
+    public float VelocidadActualKMH => velocidadActualKMH;
+
     void Start()
     {
         rb = GetComponent<Rigidbody>();

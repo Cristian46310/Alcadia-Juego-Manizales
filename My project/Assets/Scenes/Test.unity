@@ -13227,6 +13227,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 792e7ac86602fc5b5bdd776b998539c8, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1577541441}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 792e7ac86602fc5b5bdd776b998539c8, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1577541442}
   m_SourcePrefab: {fileID: 100100000, guid: 792e7ac86602fc5b5bdd776b998539c8, type: 3}
 --- !u!1 &1577541436 stripped
 GameObject:
@@ -13329,6 +13332,27 @@ MonoBehaviour:
   textoPuntaje: {fileID: 493229078}
   prefijo: 'SCORE '
   digitosMinimos: 6
+--- !u!114 &1577541442
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1577541436}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83c2c5375d175c9b9aaa0b03b3111952, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ChoqueFinDePartida
+  escenaTaller: Taller
+  escenaMensaje: MensajeMotivacional 1
+  escenaPorDefecto: Taller
+  velocidadMinimaMensajeKMH: 70
+  velocidadMinimaTallerKMH: 40
+  velocidadMaximaTallerKMH: 69
+  tagsEntidadChoque:
+  - Vehiculo
+  - Peaton
 --- !u!1 &1583591849
 GameObject:
   m_ObjectHideFlags: 0

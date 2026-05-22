@@ -69,6 +69,7 @@ public class VolverATest : MonoBehaviour
 
         cargando = true;
         Time.timeScale = 1f;
+        PuntajePartida.Limpiar();
 
         if (string.IsNullOrEmpty(nombreEscena))
         {
@@ -85,7 +86,7 @@ public class VolverATest : MonoBehaviour
         }
 
         Debug.Log($"[VolverATest] Cargando '{nombreEscena}'...");
-        SceneManager.LoadScene(nombreEscena);
+        GestorEscenas.CargarSolo(nombreEscena);
     }
 
     private bool ClicDentroDelBoton()
