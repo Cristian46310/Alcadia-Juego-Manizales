@@ -1,32 +1,18 @@
 using UnityEngine;
 
+/// <summary>
+/// Reservado para lógica global de simulación. El choque forzado cerca de la Torre
+/// lo gestiona <see cref="EventoChoqueForzadoTorre"/>.
+/// </summary>
 public class ControladorSimulacion : MonoBehaviour
 {
-    private float cronometro = 0f;
-    private bool eventoFinalActivado = false;
+    [SerializeField] private EventoChoqueForzadoTorre eventoTorre;
 
-    void Update()
+    private void Awake()
     {
-        cronometro += Time.deltaTime;
-
-        // A los 100 segundos (1:40 min), empezamos a preparar el final
-        if (cronometro >= 100f && !eventoFinalActivado)
+        if (eventoTorre == null)
         {
-            PrepararChoqueFinal();
+            eventoTorre = FindFirstObjectByType<EventoChoqueForzadoTorre>();
         }
-
-        // A los 120 segundos, si no ha chocado, forzamos algo
-        if (cronometro >= 120f)
-        {
-            Debug.Log("Fin del tiempo: Forzando evento de cierre.");
-        }
-    }
-
-    void PrepararChoqueFinal()
-    {
-        eventoFinalActivado = true;
-        // Aquí daremos la orden al Spawner de tráfico para que 
-        // cree un camión que bloquee todos los carriles.
-        Debug.Log("Apareciendo obstáculo inevitable...");
     }
 }

@@ -27,7 +27,8 @@ public class DistanceScoreController : MonoBehaviour
     public static DistanceScoreController Instancia { get; private set; }
 
     public int PuntajeActual => Mathf.FloorToInt(puntajeAcumulado);
-    public float MetrosRecorridos => metrosAcumulados; // <-- NUEVO
+    public float MetrosRecorridos => metrosAcumulados;
+    public float KilometrosRecorridos => metrosAcumulados / 1000f;
     public float MultiplicadorActual { get; private set; }
 
     private void Start()

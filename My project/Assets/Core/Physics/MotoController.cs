@@ -33,8 +33,12 @@ public class MotoController : MonoBehaviour
     public float VelocidadActual => velocidadActualKMH;
     private float inclinacionActual = 0f;
     private Quaternion modeloVisualRestLocalRotation;
+    private bool conduccionForzada;
+    private float velocidadForzadaObjetivoKMH = 75f;
+    private float direccionForzadaJoystick;
 
     public float VelocidadActualKMH => velocidadActualKMH;
+    public bool ConduccionForzadaActiva => conduccionForzada;
 
     void Start()
     {
@@ -90,8 +94,33 @@ public class MotoController : MonoBehaviour
         ManejarGiro();
     }
 
+    public void ActivarConduccionForzada(float velocidadObjetivoKmh, float direccionJoystick = 0f)
+    {
+        conduccionForzada = true;
+        velocidadForzadaObjetivoKMH = Mathf.Max(10f, velocidadObjetivoKmh);
+        direccionForzadaJoystick = Mathf.Clamp(direccionJoystick, -1f, 1f);
+        presionFrenoActual = 0f;
+    }
+
+    public void DesactivarConduccionForzada()
+    {
+        conduccionForzada = false;
+        direccionForzadaJoystick = 0f;
+    }
+
     void ActualizarVelocidad()
     {
+        if (conduccionForzada)
+        {
+            presionFrenoActual = 0f;
+            float diferencia = velocidadForzadaObjetivoKMH - velocidadActualKMH;
+            float aceleracionForzada = Mathf.Sign(diferencia) *
+                Mathf.Min(Mathf.Abs(diferencia), aceleracionPorSegundo * 2f);
+            velocidadActualKMH += aceleracionForzada * Time.fixedDeltaTime;
+            velocidadActualKMH = Mathf.Clamp(velocidadActualKMH, 0f, velocidadMaxima);
+            return;
+        }
+
         if (pedalAcelerador != null && pedalAcelerador.isPressed)
         {
             presionFrenoActual = 0f;
@@ -134,9 +163,9 @@ public class MotoController : MonoBehaviour
     {
         DireccionActual = 0f;
 
-        if (joystick == null) return;
+        if (joystick == null && !conduccionForzada) return;
 
-        float direccion = joystick.Horizontal;
+        float direccion = conduccionForzada ? direccionForzadaJoystick : joystick.Horizontal;
         DireccionActual = direccion;
 
         if (rb == null) return;

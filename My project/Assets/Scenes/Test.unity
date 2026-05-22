@@ -17367,6 +17367,62 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &882000200
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 882000201}
+  - component: {fileID: 882000202}
+  m_Layer: 0
+  m_Name: EventoFinalTorre
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &882000202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882000200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EventoChoqueForzadoTorre
+  referenciaTorre: {fileID: 0}
+  nombreTorreEnEscena: TorreHerveo_Manizales
+  metrosMinimosRecorridos: 650
+  metrosAntesDeLaTorre: 110
+  velocidadObjetivoKMH: 75
+  direccionGiroForzada: 0
+  distanciaObstaculoAdelante: 22
+  tiempoMaximoHastaChoque: 8
+  moto: {fileID: 1577541437}
+  choqueFin: {fileID: 1577541442}
+  spawnerTrafico: {fileID: 1602327872}
+  puntaje: {fileID: 1577541441}
+--- !u!4 &882000201
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 882000200}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 720, y: 1, z: 1180}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1615865986
 GameObject:
   m_ObjectHideFlags: 0
@@ -23928,3 +23984,4 @@ SceneRoots:
   - {fileID: 1486282015}
   - {fileID: 205948676}
   - {fileID: 1376609643}
+  - {fileID: 882000201}
