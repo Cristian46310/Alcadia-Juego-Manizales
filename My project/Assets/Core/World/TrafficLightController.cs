@@ -38,12 +38,17 @@ public class TrafficLightController : MonoBehaviour
     private static readonly int ColorId = Shader.PropertyToID("_Color");
     private static readonly int EmissionColorId = Shader.PropertyToID("_EmissionColor");
 
-    private readonly MaterialPropertyBlock propertyBlock = new();
+    private MaterialPropertyBlock propertyBlock;
     private TrafficLightState estadoActual;
     private float temporizadorEstado;
 
     public TrafficLightState EstadoActual => estadoActual;
     public bool DebeDetenerVehiculos => estadoActual != TrafficLightState.Green;
+
+    private void Awake()
+    {
+        propertyBlock = new MaterialPropertyBlock();
+    }
 
     private void Start()
     {
@@ -124,10 +129,7 @@ public class TrafficLightController : MonoBehaviour
 
     private void AplicarLuz(Light luz, bool activa, Color color)
     {
-        if (luz == null)
-        {
-            return;
-        }
+        if (luz == null) return;
 
         luz.color = color;
         luz.intensity = activa ? intensidadActiva : intensidadInactiva;
@@ -136,10 +138,7 @@ public class TrafficLightController : MonoBehaviour
 
     private void AplicarLente(Renderer rendererObjetivo, bool activo, Color colorActivo)
     {
-        if (rendererObjetivo == null)
-        {
-            return;
-        }
+        if (rendererObjetivo == null) return;
 
         rendererObjetivo.GetPropertyBlock(propertyBlock);
 
