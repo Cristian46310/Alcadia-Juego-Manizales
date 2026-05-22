@@ -208,6 +208,37 @@ public class TrafficSpawner : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Vehículo estático en la vía para forzar el choque del evento final.
+    /// </summary>
+    public GameObject SpawnObstaculoBloqueo(Vector3 posicion, Quaternion rotacion)
+    {
+        TrafficVehicleAI prefab = ObtenerPrefabDisponible();
+        if (prefab == null)
+        {
+            return null;
+        }
+
+        TrafficVehicleAI vehiculo = Instantiate(prefab, posicion, rotacion);
+        vehiculo.enabled = false;
+
+        Rigidbody rb = vehiculo.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+
+        if (vehiculo.GetComponent<EntidadChoqueFin>() == null)
+        {
+            vehiculo.gameObject.AddComponent<EntidadChoqueFin>();
+        }
+
+        vehiculosActivos.Add(vehiculo);
+        return vehiculo.gameObject;
+    }
+
     private void LimpiarReferenciasNulas()
     {
         for (int i = vehiculosActivos.Count - 1; i >= 0; i--)

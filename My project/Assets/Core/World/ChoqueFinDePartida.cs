@@ -26,6 +26,8 @@ public class ChoqueFinDePartida : MonoBehaviour
     private MotoController moto;
     private Rigidbody cuerpoRigido;
 
+    public bool YaProcesado => yaProcesado;
+
     private void Awake()
     {
         moto = GetComponent<MotoController>();
@@ -158,5 +160,42 @@ public class ChoqueFinDePartida : MonoBehaviour
         }
 
         return escenaPorDefecto;
+    }
+
+    /// <summary>
+    /// Usado por el evento forzado cerca de la Torre: siempre abre MensajeMotivacional.
+    /// </summary>
+    public void ProcesarChoqueMensajeMotivacionalForzado()
+    {
+        if (yaProcesado)
+        {
+            return;
+        }
+
+        var controladorPuntaje = DistanceScoreController.Instancia;
+        if (controladorPuntaje == null)
+        {
+            controladorPuntaje = FindFirstObjectByType<DistanceScoreController>();
+        }
+
+        if (controladorPuntaje == null)
+        {
+            Debug.LogWarning("[ChoqueFinDePartida] Choque forzado sin DistanceScoreController.");
+            return;
+        }
+
+        yaProcesado = true;
+        PuntajePartida.GuardarDesde(controladorPuntaje);
+
+        float velocidadKmh = Mathf.Max(velocidadMinimaMensajeKMH, ObtenerVelocidadActualKMH());
+        Debug.Log(
+            $"[ChoqueFinDePartida] Choque forzado (Torre) — {velocidadKmh:F0} km/h → {escenaMensaje}");
+
+        if (moto != null)
+        {
+            moto.DesactivarConduccionForzada();
+        }
+
+        GestorEscenas.CargarSolo(escenaMensaje);
     }
 }
