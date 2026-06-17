@@ -1,9 +1,9 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
 #endif
 
 [DisallowMultipleComponent]
@@ -19,6 +19,13 @@ public class VolverATest : MonoBehaviour
 
     private void Awake()
     {
+#if ENABLE_INPUT_SYSTEM
+        if (!EnhancedTouchSupport.enabled)
+        {
+            EnhancedTouchSupport.Enable();
+        }
+#endif
+
         Debug.Log($"[VolverATest] Activo en '{gameObject.name}' (escena: {SceneManager.GetActiveScene().name})");
 
         boton = GetComponent<Button>();
@@ -34,30 +41,35 @@ public class VolverATest : MonoBehaviour
         {
             Debug.LogWarning("[VolverATest] Falta componente Button en este objeto.");
         }
-
-        if (EventSystem.current == null)
-        {
-            Debug.LogWarning("[VolverATest] No hay EventSystem. Se usa detección manual de clic.");
-        }
     }
 
     private void Update()
     {
-        if (!EstaPantallaPresionada())
+#if ENABLE_INPUT_SYSTEM
+        if (!InputSistemaUIUtil.HuboToqueEstaFrame())
         {
+            if (permitirTeclaR && TeclaRPresionada())
+            {
+                IntentarDeNuevo();
+            }
+
             return;
         }
 
-        if (ClicDentroDelBoton())
+        if (ToqueDentroDelBoton())
         {
-            Debug.Log("[VolverATest] Clic detectado en el botón.");
             IntentarDeNuevo();
         }
-        else if (permitirTeclaR && TeclaRPresionada())
+#else
+        if (Input.GetMouseButtonDown(0) && ToqueDentroDelBoton(Input.mousePosition))
         {
-            Debug.Log("[VolverATest] Tecla R — cargando escena.");
             IntentarDeNuevo();
         }
+        else if (permitirTeclaR && Input.GetKeyDown(KeyCode.R))
+        {
+            IntentarDeNuevo();
+        }
+#endif
     }
 
     public void IntentarDeNuevo()
@@ -66,10 +78,6 @@ public class VolverATest : MonoBehaviour
         {
             return;
         }
-
-        cargando = true;
-        Time.timeScale = 1f;
-        PuntajePartida.Limpiar();
 
         if (string.IsNullOrEmpty(nombreEscena))
         {
@@ -85,18 +93,47 @@ public class VolverATest : MonoBehaviour
             return;
         }
 
+        cargando = true;
+        Time.timeScale = 1f;
+        PuntajePartida.Limpiar();
         Debug.Log($"[VolverATest] Cargando '{nombreEscena}'...");
         GestorEscenas.CargarSolo(nombreEscena);
     }
 
-    private bool ClicDentroDelBoton()
+    private bool ToqueDentroDelBoton()
     {
         if (rectBoton == null)
         {
             return false;
         }
 
-        Vector2 posicionPantalla = ObtenerPosicionPantalla();
+        Camera camaraUi = null;
+        if (canvasPadre != null && canvasPadre.renderMode != RenderMode.ScreenSpaceOverlay)
+        {
+            camaraUi = canvasPadre.worldCamera;
+        }
+
+#if ENABLE_INPUT_SYSTEM
+        foreach (var posicion in InputSistemaUIUtil.PosicionesToqueEstaFrame())
+        {
+            if (RectTransformUtility.RectangleContainsScreenPoint(rectBoton, posicion, camaraUi))
+            {
+                return true;
+            }
+        }
+
+        return false;
+#else
+        return ToqueDentroDelBoton(Input.mousePosition);
+#endif
+    }
+
+    private bool ToqueDentroDelBoton(Vector2 posicionPantalla)
+    {
+        if (rectBoton == null)
+        {
+            return false;
+        }
 
         Camera camaraUi = null;
         if (canvasPadre != null && canvasPadre.renderMode != RenderMode.ScreenSpaceOverlay)
@@ -107,28 +144,6 @@ public class VolverATest : MonoBehaviour
         return RectTransformUtility.RectangleContainsScreenPoint(rectBoton, posicionPantalla, camaraUi);
     }
 
-    private static Vector2 ObtenerPosicionPantalla()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null)
-        {
-            return Mouse.current.position.ReadValue();
-        }
-#endif
-        return Input.mousePosition;
-    }
-
-    private static bool EstaPantallaPresionada()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null)
-        {
-            return Mouse.current.leftButton.wasPressedThisFrame;
-        }
-#endif
-        return Input.GetMouseButtonDown(0);
-    }
-
     private static bool TeclaRPresionada()
     {
 #if ENABLE_INPUT_SYSTEM
@@ -136,7 +151,10 @@ public class VolverATest : MonoBehaviour
         {
             return Keyboard.current.rKey.wasPressedThisFrame;
         }
-#endif
+
+        return false;
+#else
         return Input.GetKeyDown(KeyCode.R);
+#endif
     }
 }

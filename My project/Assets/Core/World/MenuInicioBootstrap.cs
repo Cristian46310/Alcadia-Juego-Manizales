@@ -1,12 +1,11 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
 #endif
 
 /// <summary>
-/// Asegura Canvas y EventSystem en la escena de menú inicial.
+/// Asegura Canvas y EventSystem en la escena de menú inicial (toques en móvil).
 /// </summary>
 [DefaultExecutionOrder(-100)]
 public class MenuInicioBootstrap : MonoBehaviour
@@ -18,7 +17,9 @@ public class MenuInicioBootstrap : MonoBehaviour
     private void Awake()
     {
         CorregirCanvas();
-        AsegurarEventSystem();
+#if ENABLE_INPUT_SYSTEM
+        InputSistemaUIUtil.ConfigurarEventSystemEnEscena(accionesInput);
+#endif
     }
 
     private void CorregirCanvas()
@@ -39,23 +40,5 @@ public class MenuInicioBootstrap : MonoBehaviour
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = Vector2.zero;
         rect.sizeDelta = Vector2.zero;
-    }
-
-    private void AsegurarEventSystem()
-    {
-        if (EventSystem.current != null)
-        {
-            return;
-        }
-
-        var go = new GameObject("EventSystem_Auto");
-        go.AddComponent<EventSystem>();
-#if ENABLE_INPUT_SYSTEM
-        var modulo = go.AddComponent<InputSystemUIInputModule>();
-        if (accionesInput != null)
-        {
-            modulo.actionsAsset = accionesInput;
-        }
-#endif
     }
 }

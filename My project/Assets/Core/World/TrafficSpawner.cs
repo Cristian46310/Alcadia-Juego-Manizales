@@ -11,21 +11,43 @@ public class TrafficSpawner : MonoBehaviour
     [Header("Spawn")]
     public float intervaloSpawn = 2.5f;
     public int maxVehiculosActivos = 12;
-    public float distanciaMinimaEntreSpawns = 15f;
-    public float distanciaMinimaAlJugador = 25f;
+    [Tooltip("Distancia mínima (XZ) a otro coche para poder spawnear.")]
+    public float distanciaMinimaEntreSpawns = 22f;
+    [Tooltip("Intentos al buscar un waypoint libre en el carril.")]
+    public int intentosMaximosPorSpawn = 16;
+    [Tooltip("No spawnea si el jugador está a esta distancia (XZ) del punto de spawn o del carril.")]
+    public float distanciaMinimaAlJugador = 30f;
     public float velocidadMinimaKMH = 30f;
     public float velocidadMaximaKMH = 60f;
 
     [Header("Limpieza")]
     public float distanciaDesaparicionRespectoJugador = 80f;
 
+    [Header("Zona torre / meta (sin spawn dinámico)")]
+    [Tooltip("No genera coches cerca de la meta ni si el jugador ya llegó.")]
+    public Transform centroZonaExcluida;
+    public float radioZonaExcluida = 95f;
+
+    [HideInInspector]
+    public bool SpawnPausado;
+
     private readonly List<TrafficVehicleAI> vehiculosActivos = new();
     private float temporizadorSpawn;
+
+    private void Awake()
+    {
+        ResolverJugador();
+    }
 
     private void Update()
     {
         LimpiarReferenciasNulas();
         DestruirVehiculosLejanos();
+
+        if (SpawnPausado)
+        {
+            return;
+        }
 
         temporizadorSpawn += Time.deltaTime;
 
@@ -40,6 +62,8 @@ public class TrafficSpawner : MonoBehaviour
 
     private void IntentarSpawn()
     {
+        ResolverJugador();
+
         if (carriles == null || carriles.Length == 0 ||
             prefabsVehiculo == null || prefabsVehiculo.Length == 0)
         {
@@ -51,37 +75,52 @@ public class TrafficSpawner : MonoBehaviour
             return;
         }
 
-        LanePath carrilElegido = ObtenerCarrilDisponible();
+        if (jugador != null && EstaEnZonaExcluida(jugador.position))
+        {
+            return;
+        }
 
+        int inicio = Random.Range(0, carriles.Length);
+        for (int i = 0; i < carriles.Length; i++)
+        {
+            LanePath carril = carriles[(inicio + i) % carriles.Length];
+            if (IntentarSpawnEnCarril(carril))
+            {
+                return;
+            }
+        }
+    }
+
+    private bool IntentarSpawnEnCarril(LanePath carrilElegido)
+    {
         if (carrilElegido == null || carrilElegido.PointCount == 0)
         {
-            return;
+            return false;
         }
 
-        // Busca un punto válido fuera del rango del jugador en todo el carril
         if (!ObtenerPuntoSpawnAleatorio(carrilElegido, out Vector3 puntoSpawn, out int indiceSpawn))
         {
-            return;
+            return false;
         }
 
-        if (!SpawnDisponible(carrilElegido, puntoSpawn))
+        if (EstaEnZonaExcluida(puntoSpawn) ||
+            JugadorCercaDelPuntoSpawn(puntoSpawn) ||
+            !PosicionLibreParaSpawn(puntoSpawn))
         {
-            return;
+            return false;
         }
 
         TrafficVehicleAI prefab = ObtenerPrefabDisponible();
-
         if (prefab == null)
         {
-            return;
+            return false;
         }
 
         TrafficVehicleAI vehiculo = Instantiate(prefab, puntoSpawn, Quaternion.identity);
-
-        // Pasa el índice correcto para que el vehículo no regrese al punto 0
         vehiculo.ConfigurarCarril(carrilElegido, indiceSpawn);
         vehiculo.ConfigurarVelocidadObjetivo(Random.Range(velocidadMinimaKMH, velocidadMaximaKMH));
         vehiculosActivos.Add(vehiculo);
+        return true;
     }
 
     /// <summary>
@@ -91,16 +130,17 @@ public class TrafficSpawner : MonoBehaviour
     /// </summary>
     private bool ObtenerPuntoSpawnAleatorio(LanePath carril, out Vector3 puntoElegido, out int indiceElegido)
     {
-        // Lista temporal de índices candidatos (evita allocations innecesarias con capacidad inicial)
         List<int> candidatos = new List<int>(carril.PointCount);
 
         for (int i = 0; i < carril.PointCount; i++)
         {
             Vector3 punto = carril.GetPoint(i);
+            if (JugadorCercaDelPuntoSpawn(punto))
+            {
+                continue;
+            }
 
-            // Descarta puntos demasiado cerca del jugador
-            if (jugador != null &&
-                Vector3.Distance(jugador.position, punto) < distanciaMinimaAlJugador)
+            if (!PosicionLibreParaSpawn(punto))
             {
                 continue;
             }
@@ -115,29 +155,25 @@ public class TrafficSpawner : MonoBehaviour
             return false;
         }
 
-        // Elige un índice al azar entre los candidatos válidos
-        int seleccion = candidatos[Random.Range(0, candidatos.Count)];
-        puntoElegido = carril.GetPoint(seleccion);
-        indiceElegido = seleccion;
-        return true;
-    }
-
-    private LanePath ObtenerCarrilDisponible()
-    {
-        int cantidadCarriles = carriles.Length;
-        int indiceInicial = Random.Range(0, cantidadCarriles);
-
-        for (int i = 0; i < cantidadCarriles; i++)
+        int intentos = Mathf.Min(intentosMaximosPorSpawn, candidatos.Count);
+        for (int intento = 0; intento < intentos; intento++)
         {
-            LanePath carril = carriles[(indiceInicial + i) % cantidadCarriles];
+            int seleccion = candidatos[Random.Range(0, candidatos.Count)];
+            Vector3 punto = carril.GetPoint(seleccion);
 
-            if (carril != null && carril.PointCount > 0)
+            if (!PosicionLibreParaSpawn(punto))
             {
-                return carril;
+                continue;
             }
+
+            puntoElegido = punto;
+            indiceElegido = seleccion;
+            return true;
         }
 
-        return null;
+        puntoElegido = Vector3.zero;
+        indiceElegido = 0;
+        return false;
     }
 
     private TrafficVehicleAI ObtenerPrefabDisponible()
@@ -158,24 +194,115 @@ public class TrafficSpawner : MonoBehaviour
         return null;
     }
 
-    private bool SpawnDisponible(LanePath carril, Vector3 puntoSpawn)
+    private bool PosicionLibreParaSpawn(Vector3 puntoSpawn)
     {
+        if (distanciaMinimaEntreSpawns <= 0f)
+        {
+            return true;
+        }
+
+        Vector3 spawnPlano = Plano(puntoSpawn);
+        float radio = distanciaMinimaEntreSpawns;
+
         for (int i = 0; i < vehiculosActivos.Count; i++)
         {
-            TrafficVehicleAI vehiculo = vehiculosActivos[i];
+            if (EstaDemasiadoCerca(vehiculosActivos[i], spawnPlano, radio))
+            {
+                return false;
+            }
+        }
 
-            if (vehiculo == null || vehiculo.Lane != carril)
+        TrafficVehicleAI[] todos = FindObjectsByType<TrafficVehicleAI>(
+            FindObjectsInactive.Exclude,
+            FindObjectsSortMode.None);
+
+        for (int i = 0; i < todos.Length; i++)
+        {
+            if (EstaDemasiadoCerca(todos[i], spawnPlano, radio))
+            {
+                return false;
+            }
+        }
+
+        Vector3 centroFisico = puntoSpawn + Vector3.up * 1f;
+        Collider[] solapamientos = Physics.OverlapSphere(
+            centroFisico,
+            radio * 0.45f,
+            ~0,
+            QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < solapamientos.Length; i++)
+        {
+            Collider col = solapamientos[i];
+            if (col == null)
             {
                 continue;
             }
 
-            if (Vector3.Distance(vehiculo.transform.position, puntoSpawn) < distanciaMinimaEntreSpawns)
+            TrafficVehicleAI otro = col.GetComponentInParent<TrafficVehicleAI>();
+            if (otro == null || EsCocheDeLaTorre(otro))
+            {
+                continue;
+            }
+
+            if (EstaDemasiadoCerca(otro, spawnPlano, radio))
             {
                 return false;
             }
         }
 
         return true;
+    }
+
+    private static bool EsCocheDeLaTorre(TrafficVehicleAI vehiculo)
+    {
+        return vehiculo != null && vehiculo.GetComponent<VehiculoCruceTorre>() != null;
+    }
+
+    private static bool EstaDemasiadoCerca(TrafficVehicleAI vehiculo, Vector3 spawnPlano, float radio)
+    {
+        if (vehiculo == null || !vehiculo.gameObject.activeInHierarchy || EsCocheDeLaTorre(vehiculo))
+        {
+            return false;
+        }
+
+        return Vector3.Distance(Plano(vehiculo.transform.position), spawnPlano) < radio;
+    }
+
+    private bool EstaEnZonaExcluida(Vector3 posicion)
+    {
+        if (centroZonaExcluida == null || radioZonaExcluida <= 0f)
+        {
+            return false;
+        }
+
+        return Vector3.Distance(Plano(posicion), Plano(centroZonaExcluida.position)) <= radioZonaExcluida;
+    }
+
+    private static Vector3 Plano(Vector3 v) => Vector3.ProjectOnPlane(v, Vector3.up);
+
+    private void ResolverJugador()
+    {
+        if (jugador != null)
+        {
+            return;
+        }
+
+        MotoController moto = FindAnyObjectByType<MotoController>();
+        if (moto != null)
+        {
+            jugador = moto.transform;
+        }
+    }
+
+    private bool JugadorCercaDelPuntoSpawn(Vector3 puntoSpawn)
+    {
+        if (jugador == null || distanciaMinimaAlJugador <= 0f)
+        {
+            return false;
+        }
+
+        return Vector3.Distance(Plano(jugador.position), Plano(puntoSpawn)) < distanciaMinimaAlJugador;
     }
 
     private void DestruirVehiculosLejanos()

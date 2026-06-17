@@ -1,5 +1,8 @@
 using UnityEngine;
 using TMPro;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class MotoController : MonoBehaviour
 {
@@ -45,7 +48,7 @@ public class MotoController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
         if (rb == null)
         {
-            Debug.LogWarning("[MotoController] No se encontró Rigidbody en este GameObject.");
+            Debug.LogWarning("[MotoController] No se encontr? Rigidbody en este GameObject.");
         }
         else
         {
@@ -54,21 +57,21 @@ public class MotoController : MonoBehaviour
             rb.linearDamping = 0f;
         }
 
-        // Si no se asignó en el Inspector, busca el primer hijo con un MeshRenderer
+        // Si no se asign? en el Inspector, busca el primer hijo con un MeshRenderer
         if (modeloVisual == null)
         {
             MeshRenderer mesh = GetComponentInChildren<MeshRenderer>();
             if (mesh != null)
             {
                 modeloVisual = mesh.transform;
-                Debug.Log($"[MotoController] modeloVisual asignado automáticamente a: {modeloVisual.name}");
+                Debug.Log($"[MotoController] modeloVisual asignado autom?ticamente a: {modeloVisual.name}");
             }
             else
             {
-                Debug.LogWarning("[MotoController] No se encontró modeloVisual. Asígnalo en el Inspector.");
+                Debug.LogWarning("[MotoController] No se encontr? modeloVisual. As?gnalo en el Inspector.");
             }
         }
-        // Guardar rotación local base del modelo visual (si existe)
+        // Guardar rotaci?n local base del modelo visual (si existe)
         if (modeloVisual != null)
             modeloVisualRestLocalRotation = modeloVisual.localRotation;
         else
@@ -78,8 +81,13 @@ public class MotoController : MonoBehaviour
     void Update()
     {
         ActualizarUI();
-        // Debug rápido: presiona T en Play para aplicar una inclinación de prueba
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null
+            && Keyboard.current.tKey.wasPressedThisFrame
+            && modeloVisual != null)
+#else
         if (Input.GetKeyDown(KeyCode.T) && modeloVisual != null)
+#endif
         {
             Vector3 axisLocal = modeloVisual.InverseTransformDirection(transform.forward).normalized;
             modeloVisual.localRotation = modeloVisualRestLocalRotation * Quaternion.AngleAxis(25f, axisLocal);
@@ -104,8 +112,19 @@ public class MotoController : MonoBehaviour
 
     public void DesactivarConduccionForzada()
     {
+        if (!conduccionForzada)
+        {
+            return;
+        }
+
         conduccionForzada = false;
         direccionForzadaJoystick = 0f;
+        presionFrenoActual = 0f;
+
+        if (pedalAcelerador != null)
+        {
+            pedalAcelerador.isPressed = false;
+        }
     }
 
     void ActualizarVelocidad()
@@ -172,7 +191,7 @@ public class MotoController : MonoBehaviour
 
         if (velocidadActualKMH > 1f)
         {
-            // 1. Giro Y del Rigidbody (Rotación sobre el suelo)
+            // 1. Giro Y del Rigidbody (Rotaci?n sobre el suelo)
             float factorVelocidad = Mathf.Clamp01(1f - (velocidadActualKMH / (velocidadMaxima * 1.5f)));
             float sensibilidadReal = Mathf.Lerp(sensibilidadGiro * 0.2f, sensibilidadGiro * 0.35f, factorVelocidad);
             float rotacionY = direccion * sensibilidadReal * Time.fixedDeltaTime;
@@ -184,11 +203,11 @@ public class MotoController : MonoBehaviour
     {
         if (modeloVisual == null) return;
 
-        // NOTA: Si tu modelo visual se inclina hacia adelante/atrás en lugar de los lados, 
+        // NOTA: Si tu modelo visual se inclina hacia adelante/atr?s en lugar de los lados, 
         // cambia "Vector3.forward" por "Vector3.right" (Eje X)
         Quaternion rotacionInclinada = Quaternion.AngleAxis(angulo, Vector3.forward);
 
-        // Combinamos la rotación inicial de fábrica del modelo con la nueva inclinación en su propio eje
+        // Combinamos la rotaci?n inicial de f?brica del modelo con la nueva inclinaci?n en su propio eje
         modeloVisual.localRotation = modeloVisualRestLocalRotation * rotacionInclinada;
     }
 

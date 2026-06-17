@@ -1,0 +1,44 @@
+Unity Editor version:    6000.4.4f1 (360f97ecca93)
+Branch:                  6000.4/staging
+Build type:              Release
+Batch mode:              YES
+System name:             Linux
+Distro version:          #29~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon May 11 10:30:58 UTC 2
+Kernel version:          6.17.0-29-generic
+Architecture:            x86_64
+Available memory:        15317 MB
+Date:                    2026-05-22T23:28:18Z
+[Licensing::Module] Trying to connect to existing licensing client channel...
+Initialize udev device monitor.
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-cris-grisales" at "2026-05-22T23:28:18.104541Z"
+[SignatureVerifier] Application signature verification not supported on this platform.
+[Licensing::Client] Error: HandshakeResponse reported an error:
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.18.1'.
+[Licensing::Module] Error: Failed to handshake to channel: "LicenseClient-cris-grisales"
+[Licensing::IpcConnector] LicenseClient-cris-grisales channel disconnected successfully.
+
+COMMAND LINE ARGUMENTS:
+/home/cris-grisales/Unity/Hub/Editor/6000.4.4f1/Editor/Unity
+-batchmode
+-quit
+-nographics
+-projectPath
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-cris-grisales-6000.4.4" at "2026-05-22T23:28:18.109716Z"
+/home/cris-grisales/Escritorio/Juego-Alcaldia/My project
+-executeMethod
+AndroidBuildHelper.BuildApkRelease
+-logFile
+/home/cris-grisales/Escritorio/Juego-Alcaldia/My project/Builds/android-build.log
+Successfully changed project path to: /home/cris-grisales/Escritorio/Juego-Alcaldia/My project
+[SignatureVerifier] Application signature verification not supported on this platform.
+/home/cris-grisales/Escritorio/Juego-Alcaldia/My project
+[Licensing::Client] Handshaking with LicensingClient:
+  Version:                 1.18.1+9fbee8e
+  Session Id:              736688dbcb9f423faa817f4fb3d26577
+  Correlation Id:          295a4f2b23a56577d9c2ebc7b2761a56
+  External correlation Id: 6357751635493472200
+  Machine Id:              aZoE0Xsv15IDs+hZEZhggv0zVlc=
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-cris-grisales-6000.4.4" (connect: 0.00s, validation: 0.00s, handshake: 0.00s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-cris-grisales-6000.4.4-notifications" at "2026-05-22T23:28:18.112421Z"
+[Licensing::Module] Error: Access token is unavailable; failed to update

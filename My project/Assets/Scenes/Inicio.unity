@@ -243,7 +243,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 45b96b71b16446899022329721b84504, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MenuInicioBootstrap
-  accionesInput: {fileID: 11400000, guid: 052faaac586de48259a63d0c4782560b, type: 2}
+  accionesInput: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!114 &881000012
 MonoBehaviour:
   m_ObjectHideFlags: 0

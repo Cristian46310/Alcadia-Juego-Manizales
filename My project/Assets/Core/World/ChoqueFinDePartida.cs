@@ -1,7 +1,7 @@
 using UnityEngine;
 
 /// <summary>
-/// Al chocar con un coche o persona, guarda el puntaje y carga Taller o Mensaje motivacional.
+/// Al chocar con coche, persona, edificio o barrera, guarda el puntaje y carga Taller o Mensaje motivacional.
 /// Mensaje motivacional: ≥70 km/h al chocar. Taller: entre 40 y 69 km/h.
 /// </summary>
 public class ChoqueFinDePartida : MonoBehaviour
@@ -19,8 +19,8 @@ public class ChoqueFinDePartida : MonoBehaviour
     [SerializeField] private float velocidadMaximaTallerKMH = 69f;
 
     [Header("Qué cuenta como choque")]
-    [Tooltip("Tags adicionales (además de coches con TrafficVehicleAI y EntidadChoqueFin).")]
-    [SerializeField] private string[] tagsEntidadChoque = { "Vehiculo", "Peaton" };
+    [Tooltip("Tags adicionales (coches, peatones, Barrera, Edificio, EntidadChoqueFin).")]
+    [SerializeField] private string[] tagsEntidadChoque = { "Vehiculo", "Peaton", "Barrera", "Edificio" };
 
     private bool yaProcesado;
     private MotoController moto;
@@ -47,7 +47,7 @@ public class ChoqueFinDePartida : MonoBehaviour
         }
 
         float velocidadImpacto = collision.relativeVelocity.magnitude * 3.6f;
-        ProcesarChoque(velocidadImpacto);
+        ProcesarChoque(velocidadImpacto, collision.collider);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -62,14 +62,24 @@ public class ChoqueFinDePartida : MonoBehaviour
             return;
         }
 
-        ProcesarChoque(ObtenerVelocidadActualKMH());
+        ProcesarChoque(ObtenerVelocidadActualKMH(), other);
     }
 
     private bool EsEntidadChoque(Collider collider)
     {
-        if (collider == null)
+        if (collider == null || collider.isTrigger)
         {
             return false;
+        }
+
+        if (EsSuelo(collider))
+        {
+            return false;
+        }
+
+        if (collider.GetComponentInParent<VehiculoCruceTorre>() != null)
+        {
+            return true;
         }
 
         if (collider.GetComponentInParent<TrafficVehicleAI>() != null)
@@ -77,7 +87,29 @@ public class ChoqueFinDePartida : MonoBehaviour
             return true;
         }
 
-        if (collider.GetComponentInParent<EntidadChoqueFin>() != null)
+        if (collider.GetComponentInParent<PedestrianAI>() != null)
+        {
+            return true;
+        }
+
+        EntidadChoqueFin entidad = collider.GetComponentInParent<EntidadChoqueFin>() ??
+                                   collider.GetComponent<EntidadChoqueFin>();
+        if (entidad != null)
+        {
+            return true;
+        }
+
+        if (NombreEsBarrera(collider.gameObject.name))
+        {
+            return true;
+        }
+
+        if (NombreEsDivisor(collider.gameObject.name))
+        {
+            return true;
+        }
+
+        if (NombreEsEdificio(collider.gameObject.name))
         {
             return true;
         }
@@ -104,7 +136,47 @@ public class ChoqueFinDePartida : MonoBehaviour
         return false;
     }
 
-    private void ProcesarChoque(float velocidadImpacto)
+    private static bool EsSuelo(Collider collider)
+    {
+        string nombre = collider.gameObject.name;
+        return nombre.StartsWith("Plane") ||
+               nombre.Equals("Terrain") ||
+               collider.CompareTag("Suelo");
+    }
+
+    private static bool NombreEsBarrera(string nombre)
+    {
+        return !string.IsNullOrEmpty(nombre) &&
+               nombre.IndexOf("barrera", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool NombreEsDivisor(string nombre)
+    {
+        if (string.IsNullOrEmpty(nombre))
+        {
+            return false;
+        }
+
+        if (nombre.StartsWith("Cube"))
+        {
+            return true;
+        }
+
+        return nombre.IndexOf("divisor", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool NombreEsEdificio(string nombre)
+    {
+        return !string.IsNullOrEmpty(nombre) &&
+               nombre.IndexOf("Building", System.StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    private static bool EsChoqueCruceTorre(Collider collider)
+    {
+        return collider != null && collider.GetComponentInParent<VehiculoCruceTorre>() != null;
+    }
+
+    private void ProcesarChoque(float velocidadImpacto, Collider colliderChoque)
     {
         var controladorPuntaje = DistanceScoreController.Instancia;
         if (controladorPuntaje == null)
@@ -119,11 +191,17 @@ public class ChoqueFinDePartida : MonoBehaviour
         }
 
         float velocidadKmh = Mathf.Max(velocidadImpacto, ObtenerVelocidadActualKMH());
+        bool choqueCruceTorre = EsChoqueCruceTorre(colliderChoque);
 
         yaProcesado = true;
         PuntajePartida.GuardarDesde(controladorPuntaje);
 
-        string escena = ElegirEscena(velocidadKmh);
+        if (moto != null)
+        {
+            moto.DesactivarConduccionForzada();
+        }
+
+        string escena = choqueCruceTorre ? escenaMensaje : ElegirEscena(velocidadKmh);
         Debug.Log(
             $"[ChoqueFinDePartida] Choque — {velocidadKmh:F0} km/h, " +
             $"puntaje={controladorPuntaje.PuntajeActual} → {escena}");
@@ -163,9 +241,9 @@ public class ChoqueFinDePartida : MonoBehaviour
     }
 
     /// <summary>
-    /// Usado por el evento forzado cerca de la Torre: siempre abre MensajeMotivacional.
+    /// Meta del recorrido (<see cref="ZonaFinRecorrido"/>): guarda puntaje y abre Mensaje motivacional.
     /// </summary>
-    public void ProcesarChoqueMensajeMotivacionalForzado()
+    public void FinalizarRecorridoMensajeMotivacional()
     {
         if (yaProcesado)
         {
@@ -175,26 +253,26 @@ public class ChoqueFinDePartida : MonoBehaviour
         var controladorPuntaje = DistanceScoreController.Instancia;
         if (controladorPuntaje == null)
         {
-            controladorPuntaje = FindFirstObjectByType<DistanceScoreController>();
+            controladorPuntaje = FindAnyObjectByType<DistanceScoreController>();
         }
 
         if (controladorPuntaje == null)
         {
-            Debug.LogWarning("[ChoqueFinDePartida] Choque forzado sin DistanceScoreController.");
+            Debug.LogWarning("[ChoqueFinDePartida] Meta sin DistanceScoreController.");
             return;
         }
 
         yaProcesado = true;
         PuntajePartida.GuardarDesde(controladorPuntaje);
 
-        float velocidadKmh = Mathf.Max(velocidadMinimaMensajeKMH, ObtenerVelocidadActualKMH());
-        Debug.Log(
-            $"[ChoqueFinDePartida] Choque forzado (Torre) — {velocidadKmh:F0} km/h → {escenaMensaje}");
-
         if (moto != null)
         {
             moto.DesactivarConduccionForzada();
         }
+
+        float velocidadKmh = Mathf.Max(velocidadMinimaMensajeKMH, ObtenerVelocidadActualKMH());
+        Debug.Log(
+            $"[ChoqueFinDePartida] Meta del recorrido — {velocidadKmh:F0} km/h → {escenaMensaje}");
 
         GestorEscenas.CargarSolo(escenaMensaje);
     }

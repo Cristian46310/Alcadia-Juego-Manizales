@@ -6,4 +6,6 @@ using UnityEngine;
 /// </summary>
 public class EntidadChoqueFin : MonoBehaviour
 {
+    [Tooltip("Si es la meta (torre), carga Mensaje motivacional al chocar.")]
+    public bool siempreMensajeMotivacional;
 }

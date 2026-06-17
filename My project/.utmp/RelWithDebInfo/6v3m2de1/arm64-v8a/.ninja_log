@@ -1,0 +1,10 @@
+# ninja log v5
+0	974	1779493112400294907	GameActivity/CMakeFiles/game.dir/UGAEntry.cpp.o	50ccd60bd6daba17
+0	1061	1779493112491811120	GameActivity/CMakeFiles/game.dir/UGAConfiguration.cpp.o	889326743995128e
+1	1092	1779493112527105758	GameActivity/CMakeFiles/game.dir/UGASoftKeyboard.cpp.o	2fd4ce912f23e65c
+1	1113	1779493112545344829	GameActivity/CMakeFiles/game.dir/UGAInputKeyEvent.cpp.o	17694f2da7c51bb3
+0	1121	1779493112554787809	GameActivity/CMakeFiles/game.dir/UGADebug.cpp.o	30f5f389ab393236
+1	1170	1779493112604106886	GameActivity/CMakeFiles/game.dir/UGAInputMotionEvent.cpp.o	344a8b6bff994aab
+0	1412	1779493112847078751	GameActivity/CMakeFiles/game.dir/UGAInput.cpp.o	79ff0423fb70b1c1
+0	1447	1779493112881021601	GameActivity/CMakeFiles/game.dir/UGAApplication.cpp.o	2cfe3a1da3b5715b
+1447	1495	1779493112935901990	/home/cris-grisales/Escritorio/Juego-Alcaldia/My project/Library/Bee/Android/Prj/IL2CPP/Gradle/unityLibrary/build/intermediates/cxx/RelWithDebInfo/6v3m2de1/obj/arm64-v8a/libgame.so	2317eecf1c43e103

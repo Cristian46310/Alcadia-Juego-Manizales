@@ -24,17 +24,67 @@ public class PedestrianAI : MonoBehaviour
     private bool movingToEnd = true;
     private float waitTimer = 0f;
 
+    private void Awake()
+    {
+        PrepararColisionFinPartida();
+    }
+
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
-        rb.interpolation = RigidbodyInterpolation.Interpolate;
-        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
         if (startPoint != null)
         {
             transform.position = startPoint.position;
             transform.rotation = startPoint.rotation;
         }
+    }
+
+    /// <summary>
+    /// Collider sólido + tag Peaton para que ChoqueFinDePartida detecte el impacto.
+    /// </summary>
+    public void PrepararColisionFinPartida()
+    {
+        if (!CompareTag("Peaton"))
+        {
+            gameObject.tag = "Peaton";
+        }
+
+        if (GetComponent<EntidadChoqueFin>() == null)
+        {
+            gameObject.AddComponent<EntidadChoqueFin>();
+        }
+
+        AsegurarColliderSolido();
+
+        rb = GetComponent<Rigidbody>();
+        if (rb == null)
+        {
+            rb = gameObject.AddComponent<Rigidbody>();
+            rb.mass = 70f;
+        }
+
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+    }
+
+    private void AsegurarColliderSolido()
+    {
+        Collider[] colliders = GetComponentsInChildren<Collider>();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null && !colliders[i].isTrigger)
+            {
+                return;
+            }
+        }
+
+        var capsule = gameObject.AddComponent<CapsuleCollider>();
+        capsule.height = 1.75f;
+        capsule.radius = 0.32f;
+        capsule.center = new Vector3(0f, 0.875f, 0f);
+        capsule.isTrigger = false;
     }
 
     private void FixedUpdate()

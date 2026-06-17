@@ -3,9 +3,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.UI;
 #endif
 
 /// <summary>
@@ -23,6 +23,7 @@ public class TallerEscenaBootstrap : MonoBehaviour
     private void Awake()
     {
         Debug.Log($"[EscenaFinal] Iniciada: {gameObject.scene.name}");
+        ConfigurarEventSystem();
         StartCoroutine(InicializarEscenaUnica());
     }
 
@@ -34,9 +35,44 @@ public class TallerEscenaBootstrap : MonoBehaviour
         CorregirCanvas();
         EliminarPanelFondoGenerado();
         CorregirTextosMensaje();
-        AsegurarEventSystem();
+        ConfigurarEventSystem();
         AsegurarPuntajeFinalUI();
         OcultarElementosEscenasAjenas();
+        AsegurarBotonesReintentar();
+    }
+
+    private void AsegurarBotonesReintentar()
+    {
+        var botones = FindObjectsByType<Button>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < botones.Length; i++)
+        {
+            Button boton = botones[i];
+            if (boton == null || boton.gameObject.scene != gameObject.scene)
+            {
+                continue;
+            }
+
+            if (!boton.gameObject.name.Contains("retry", System.StringComparison.OrdinalIgnoreCase)
+                && !boton.GetComponent<VolverATest>())
+            {
+                continue;
+            }
+
+            if (boton.GetComponent<VolverATest>() == null)
+            {
+                boton.gameObject.AddComponent<VolverATest>();
+            }
+
+            boton.interactable = true;
+
+            foreach (var tmp in boton.GetComponentsInChildren<TextMeshProUGUI>(true))
+            {
+                if (tmp != null)
+                {
+                    tmp.raycastTarget = false;
+                }
+            }
+        }
     }
 
     private void OcultarElementosEscenasAjenas()
@@ -95,6 +131,15 @@ public class TallerEscenaBootstrap : MonoBehaviour
         {
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 100;
+        }
+
+        var scaler = GetComponent<CanvasScaler>();
+        if (scaler != null)
+        {
+            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1080f, 1920f);
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+            scaler.matchWidthOrHeight = 0.5f;
         }
     }
 
@@ -180,22 +225,16 @@ public class TallerEscenaBootstrap : MonoBehaviour
         }
     }
 
-    private void AsegurarEventSystem()
+    private void ConfigurarEventSystem()
     {
-        if (EventSystem.current != null)
-        {
-            return;
-        }
-
-        var go = new GameObject("EventSystem_Auto");
-        go.AddComponent<EventSystem>();
 #if ENABLE_INPUT_SYSTEM
-        var modulo = go.AddComponent<InputSystemUIInputModule>();
-        if (accionesInput != null)
+        InputSistemaUIUtil.ConfigurarEventSystemEnEscena(accionesInput);
+#else
+        if (EventSystem.current == null)
         {
-            modulo.actionsAsset = accionesInput;
+            var go = new GameObject("EventSystem_Auto");
+            go.AddComponent<EventSystem>();
         }
 #endif
-        Debug.Log("[EscenaFinal] EventSystem creado en runtime.");
     }
 }

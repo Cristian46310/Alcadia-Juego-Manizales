@@ -1,8 +1,7 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.UI;
 #if ENABLE_INPUT_SYSTEM
-using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.EnhancedTouch;
 #endif
 
 /// <summary>
@@ -20,6 +19,13 @@ public class IniciarJuego : MonoBehaviour
 
     private void Awake()
     {
+#if ENABLE_INPUT_SYSTEM
+        if (!EnhancedTouchSupport.enabled)
+        {
+            EnhancedTouchSupport.Enable();
+        }
+#endif
+
         boton = GetComponent<Button>();
         rectBoton = GetComponent<RectTransform>();
         canvasPadre = GetComponentInParent<Canvas>();
@@ -33,15 +39,17 @@ public class IniciarJuego : MonoBehaviour
 
     private void Update()
     {
-        if (!EstaPantallaPresionada() || rectBoton == null)
+#if ENABLE_INPUT_SYSTEM
+        if (!InputSistemaUIUtil.HuboToqueEstaFrame() || rectBoton == null)
         {
             return;
         }
 
-        if (ClicDentroDelBoton())
+        if (ToqueDentroDelBoton())
         {
             IniciarPartida();
         }
+#endif
     }
 
     public void IniciarPartida()
@@ -71,7 +79,7 @@ public class IniciarJuego : MonoBehaviour
         GestorEscenas.CargarSolo(escenaJuego);
     }
 
-    private bool ClicDentroDelBoton()
+    private bool ToqueDentroDelBoton()
     {
         Camera camaraUi = null;
         if (canvasPadre != null && canvasPadre.renderMode != RenderMode.ScreenSpaceOverlay)
@@ -79,28 +87,14 @@ public class IniciarJuego : MonoBehaviour
             camaraUi = canvasPadre.worldCamera;
         }
 
-        return RectTransformUtility.RectangleContainsScreenPoint(rectBoton, ObtenerPosicionPantalla(), camaraUi);
-    }
-
-    private static Vector2 ObtenerPosicionPantalla()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null)
+        foreach (var posicion in InputSistemaUIUtil.PosicionesToqueEstaFrame())
         {
-            return Mouse.current.position.ReadValue();
+            if (RectTransformUtility.RectangleContainsScreenPoint(rectBoton, posicion, camaraUi))
+            {
+                return true;
+            }
         }
-#endif
-        return Input.mousePosition;
-    }
 
-    private static bool EstaPantallaPresionada()
-    {
-#if ENABLE_INPUT_SYSTEM
-        if (Mouse.current != null)
-        {
-            return Mouse.current.leftButton.wasPressedThisFrame;
-        }
-#endif
-        return Input.GetMouseButtonDown(0);
+        return false;
     }
 }

@@ -57,12 +57,15 @@ public class PedestrianSpawner : MonoBehaviour
                     GameObject p = Instantiate(prefab, spawnPosition, Quaternion.identity, parent);
 
                     PedestrianAI ai = p.GetComponent<PedestrianAI>();
-                    if (ai != null)
+                    if (ai == null)
                     {
-                        ai.startPoint = cw.startPoint;
-                        ai.endPoint = cw.endPoint;
-                        ai.crosswalk = cw;
+                        ai = p.AddComponent<PedestrianAI>();
                     }
+
+                    ai.PrepararColisionFinPartida();
+                    ai.startPoint = cw.startPoint;
+                    ai.endPoint = cw.endPoint;
+                    ai.crosswalk = cw;
                 }
             }
         }

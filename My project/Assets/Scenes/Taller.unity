@@ -1588,7 +1588,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4d8e91f2a6b4039b1e7f53ac820d4e1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TallerEscenaBootstrap
-  accionesInput: {fileID: 11400000, guid: 052faaac586de48259a63d0c4782560b, type: 2}
+  accionesInput: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!224 &1821065380
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1880,7 +1880,7 @@ MonoBehaviour:
   m_TrackedDevicePositionAction: {fileID: 0}
   m_TrackedDeviceOrientationAction: {fileID: 0}
   m_DeselectOnBackgroundClick: 1
-  m_PointerBehavior: 0
+  m_PointerBehavior: 2
   m_CursorLockBehavior: 0
   m_ScrollDeltaPerTick: 6
 --- !u!114 &1987654322
