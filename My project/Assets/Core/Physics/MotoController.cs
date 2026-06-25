@@ -13,7 +13,7 @@ public class MotoController : MonoBehaviour
     [Header("Conduccion Base")]
     public float aceleracionPorSegundo = 35f;
     public float velocidadMaxima = 150f;
-    public float frenadoBasePorSegundo = 12f;
+    public float frenadoBasePorSegundo = 17f;
     public float sensibilidadFrenoPorSegundo = 1.5f;
     public float presionMaximaFreno = 3f;
     public float factorDesaceleracionLibrePorVelocidad = 0.1f;

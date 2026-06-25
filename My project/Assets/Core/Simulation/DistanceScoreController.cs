@@ -17,7 +17,7 @@ public class DistanceScoreController : MonoBehaviour
 
     [Header("UI")]
     public TextMeshProUGUI textoPuntaje;
-    public string prefijo = "SCORE ";
+    public string prefijo = "DINERO ";
     public int digitosMinimos = 6;
 
     private Vector3 posicionAnteriorPlano;

@@ -76,4 +76,11 @@ public class MostrarPuntajeFinalUI : MonoBehaviour
             textoKilometros.text = prefijoKm + PuntajePartida.KilometrosRecorridos.ToString("F1") + " km";
         }
     }
+
+    // Permite cambiar el prefijo del puntaje desde otras clases (por ejemplo, bootstrap de escena)
+    public void SetPrefijoPuntaje(string nuevoPrefijo)
+    {
+        prefijoPuntaje = nuevoPrefijo ?? string.Empty;
+        ActualizarUI();
+    }
 }

@@ -219,9 +219,19 @@ public class TallerEscenaBootstrap : MonoBehaviour
 
     private void AsegurarPuntajeFinalUI()
     {
-        if (GetComponent<MostrarPuntajeFinalUI>() == null)
+        var ui = GetComponent<MostrarPuntajeFinalUI>();
+        if (ui == null)
         {
-            gameObject.AddComponent<MostrarPuntajeFinalUI>();
+            ui = gameObject.AddComponent<MostrarPuntajeFinalUI>();
+        }
+
+        // Para las escenas finales solicitadas, cambiar el prefijo a "DINERO"
+        string nombreEscena = gameObject.scene.name ?? string.Empty;
+        string nombreMinus = nombreEscena.ToLowerInvariant();
+        if (nombreMinus.Contains("taller") || nombreMinus.Contains("mensaje"))
+        {
+            ui.SetPrefijoPuntaje("DINERO ");
+            Debug.Log($"[EscenaFinal] Prefijo de puntaje cambiado a 'DINERO' para escena: {nombreEscena}");
         }
     }
 
