@@ -25,6 +25,9 @@ public class SidewalkPedestrianSpawner : MonoBehaviour
     public float speed = 1.4f;
     public float rotateSpeed = 8f;
     public float stopDistance = 0.15f;
+    [Header("Debug")]
+    [Tooltip("Habilita logs detallados del spawner (desactivar en builds para mejor rendimiento)")]
+    public bool enableDebugLogs = false;
 
     private void Start()
     {
@@ -37,11 +40,11 @@ public class SidewalkPedestrianSpawner : MonoBehaviour
         LanePath[] rutasValidas = ObtenerRutasValidas();
         if (rutasValidas.Length == 0)
         {
-            Debug.LogError("[SidewalkPedestrianSpawner] No hay rutas válidas. Verifica que 'ruta' o 'rutas[]' tengan waypoints configurados.");
+            if (enableDebugLogs) Debug.LogError("[SidewalkPedestrianSpawner] No hay rutas válidas. Verifica que 'ruta' o 'rutas[]' tengan waypoints configurados.");
             return;
         }
-        
-        Debug.Log($"[SidewalkPedestrianSpawner] Spawn iniciado: {cantidad} peatones en {rutasValidas.Length} rutas");
+
+        if (enableDebugLogs) Debug.Log($"[SidewalkPedestrianSpawner] Spawn iniciado: {cantidad} peatones en {rutasValidas.Length} rutas");
 
         if (parent == null)
         {
@@ -102,7 +105,7 @@ public class SidewalkPedestrianSpawner : MonoBehaviour
             walker.alturaSobreSuelo = alturaSobreSuelo;
         }
         
-        Debug.Log($"[SidewalkPedestrianSpawner] ✓ {cantidad} peatones creados exitosamente.");
+        if (enableDebugLogs) Debug.Log($"[SidewalkPedestrianSpawner] ✓ {cantidad} peatones creados exitosamente.");
     }
 
     private LanePath[] ObtenerRutasValidas()

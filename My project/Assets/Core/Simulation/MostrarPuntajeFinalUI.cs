@@ -1,5 +1,6 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class MostrarPuntajeFinalUI : MonoBehaviour
 {
@@ -26,7 +27,7 @@ public class MostrarPuntajeFinalUI : MonoBehaviour
     {
         if (textoPuntaje == null)
         {
-            textoPuntaje = CrearTexto("TextoPuntajeFinal", new Vector2(0f, 520f), 40);
+            textoPuntaje = CrearTexto("TextoPuntajeFinal", new Vector2(0f, 330f), 40);
         }
 
         if (mostrarKilometros && textoKilometros == null)
