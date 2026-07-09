@@ -1,5 +1,4 @@
-# trafic-rider-alcadia
-Juego simuladando trafic rider, con la ciudad de manizales, para trabajo de la alcadia
+### CIVIC-Manizales (Sistema Interactivo de Cultura Ciudadana)
 
 ## Inicio rapido
 
